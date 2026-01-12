@@ -20,19 +20,24 @@ services:
       retries: 3
 
   lambda-mock:
-    image: public.ecr.aws/lambda/nodejs:20
+    build:
+      context: ./lambda/log-processor
+      dockerfile: Dockerfile.mock
     ports:
-      - "9000:8080"
+      - "9000:9000"
     environment:
       - AWS_LAMBDA_FUNCTION_NAME=log-processor-mock
       - AWS_REGION=us-east-1
+      - PORT=9000
       - OBSERVE_ENDPOINT=${OBSERVE_ENDPOINT:-https://collect.observeinc.com/v1/otlp}
       - OBSERVE_TOKEN=${OBSERVE_TOKEN:-}
-    volumes:
-      - ./lambda/log-processor:/var/task
-    command: index.handler
     networks:
       - otel-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9000/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   otel-network:
