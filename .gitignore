@@ -1,0 +1,14 @@
+node_modules/
+npm-debug.log
+.env
+.env.local
+.DS_Store
+*.log
+coverage/
+.nyc_output/
+dist/
+build/
+*.zip
+lambda-deployment.zip
+.vscode/
+.idea/
