@@ -50,6 +50,10 @@ LAMBDA_LOG_URL=https://your-lambda-url.amazonaws.com
 ### 3. Run Locally with Docker Compose
 
 ```bash
+# Try this first (Docker Compose V2 - built into newer Docker versions)
+docker compose up --build
+
+# OR if the above doesn't work, use the standalone version
 docker-compose up --build
 ```
 

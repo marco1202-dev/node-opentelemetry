@@ -7,7 +7,7 @@ const { Resource } = require('@opentelemetry/resources');
 const { SEMRESATTRS_SERVICE_NAME } = require('@opentelemetry/semantic-conventions');
 const { PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
 const { LoggerProvider, SimpleLogRecordProcessor } = require('@opentelemetry/sdk-logs');
-const { logs } = require('@opentelemetry/api-logs');
+const { logs, SeverityNumber } = require('@opentelemetry/api-logs');
 const { trace, context, SpanStatusCode } = require('@opentelemetry/api');
 
 const OBSERVE_ENDPOINT = process.env.OBSERVE_ENDPOINT || 'https://collect.observeinc.com/v1/otlp';
@@ -67,7 +67,40 @@ function initializeTelemetry() {
   );
 
   logs.setGlobalLoggerProvider(loggerProvider);
-  logger = logs.getLogger('lambda-log-processor');
+  const baseLogger = logs.getLogger('lambda-log-processor');
+  
+  const createLogRecord = (severityNumber, severityText, message, attributes = {}) => {
+    if (typeof message === 'string') {
+      return {
+        severityNumber,
+        severityText,
+        body: message,
+        attributes,
+      };
+    } else {
+      return {
+        severityNumber,
+        severityText,
+        body: JSON.stringify(message),
+        attributes: message,
+      };
+    }
+  };
+  
+  logger = {
+    info: (message, attributes = {}) => {
+      baseLogger.emit(createLogRecord(SeverityNumber.INFO, 'INFO', message, attributes));
+    },
+    error: (message, attributes = {}) => {
+      baseLogger.emit(createLogRecord(SeverityNumber.ERROR, 'ERROR', message, attributes));
+    },
+    warn: (message, attributes = {}) => {
+      baseLogger.emit(createLogRecord(SeverityNumber.WARN, 'WARN', message, attributes));
+    },
+    debug: (message, attributes = {}) => {
+      baseLogger.emit(createLogRecord(SeverityNumber.DEBUG, 'DEBUG', message, attributes));
+    },
+  };
 
   sdk.start();
 }

@@ -7,7 +7,7 @@ import { Resource } from '@opentelemetry/resources';
 import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { LoggerProvider, SimpleLogRecordProcessor } from '@opentelemetry/sdk-logs';
-import { logs } from '@opentelemetry/api-logs';
+import { logs, SeverityNumber } from '@opentelemetry/api-logs';
 
 const OBSERVE_ENDPOINT = process.env.OBSERVE_ENDPOINT || 'https://collect.observeinc.com/v1/otlp';
 const OBSERVE_TOKEN = process.env.OBSERVE_TOKEN || '';
@@ -94,5 +94,38 @@ export function shutdownTelemetry() {
 }
 
 export function getLogger(name) {
-  return logs.getLogger(name);
+  const logger = logs.getLogger(name);
+  
+  const createLogRecord = (severityNumber, severityText, message, attributes = {}) => {
+    if (typeof message === 'string') {
+      return {
+        severityNumber,
+        severityText,
+        body: message,
+        attributes,
+      };
+    } else {
+      return {
+        severityNumber,
+        severityText,
+        body: JSON.stringify(message),
+        attributes: message,
+      };
+    }
+  };
+  
+  return {
+    info: (message, attributes = {}) => {
+      logger.emit(createLogRecord(SeverityNumber.INFO, 'INFO', message, attributes));
+    },
+    error: (message, attributes = {}) => {
+      logger.emit(createLogRecord(SeverityNumber.ERROR, 'ERROR', message, attributes));
+    },
+    warn: (message, attributes = {}) => {
+      logger.emit(createLogRecord(SeverityNumber.WARN, 'WARN', message, attributes));
+    },
+    debug: (message, attributes = {}) => {
+      logger.emit(createLogRecord(SeverityNumber.DEBUG, 'DEBUG', message, attributes));
+    },
+  };
 }

@@ -17,10 +17,10 @@ docker-build:
 	docker build -t opentelemetry-poc:latest .
 
 docker-run:
-	docker-compose up --build
+	docker compose up --build || docker-compose up --build
 
 docker-stop:
-	docker-compose down
+	docker compose down || docker-compose down
 
 deploy-lambda:
 	cd lambda && chmod +x deploy.sh && ./deploy.sh
